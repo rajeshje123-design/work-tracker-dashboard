@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Work Tracker Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Chart.js library -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <!-- Chart.js Adapter for Date-Time scales (optional, but good for time series) -->
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+</head>
+<body>
+    <div class="dashboard-container">
+        <h1>My Work Tracker Dashboard</h1>
+
+        <div class="filters">
+            <label for="startDate">From:</label>
+            <input type="date" id="startDate">
+            <label for="endDate">To:</label>
+            <input type="date" id="endDate">
+
+            <label for="companyFilter">Company:</label>
+            <select id="companyFilter">
+                <option value="">All Companies</option>
+            </select>
+
+            <label for="natureFilter">Nature:</label>
+            <select id="natureFilter">
+                <option value="">All Natures</option>
+            </select>
+
+            <label for="typeFilter">Type:</label>
+            <select id="typeFilter">
+                <option value="">All Types</option>
+            </select>
+
+            <button id="applyFilters">Apply Filters</button>
+            <button id="resetFilters">Reset Filters</button>
+        </div>
+
+        <div class="summary-cards">
+            <div class="card">
+                <h3>Total Hours Tracked</h3>
+                <p id="totalHours">0</p>
+            </div>
+            <div class="card">
+                <h3>Total Companies</h3>
+                <p id="totalCompanies">0</p>
+            </div>
+            <div class="card">
+                <h3>Unique Projects (Nature)</h3>
+                <p id="uniqueNatures">0</p>
+            </div>
+        </div>
+
+        <div class="chart-section">
+            <div class="chart-card">
+                <h2>Daily Hours Trend</h2>
+                <canvas id="dailyHoursChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h2>Hours by Company</h2>
+                <canvas id="companyHoursChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h2>Hours by Nature of Work</h2>
+                <canvas id="natureHoursChart"></canvas>
+            </div>
+            <div class="chart-card">
+                <h2>Hours by Type of Work</h2>
+                <canvas id="typeHoursChart"></canvas>
+            </div>
+        </div>
+
+        <h2>Raw Data Table</h2>
+        <div class="table-container">
+            <table id="dataTable">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Time (hrs)</th>
+                        <th>Company Worked For</th>
+                        <th>Nature of Work</th>
+                        <th>Type of Work</th>
+                        <th>Description of Work</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Data will be inserted here by JavaScript -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
