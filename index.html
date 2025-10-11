@@ -54,25 +54,32 @@
             </div>
         </div>
 
-        <div class="chart-section">
-            <div class="chart-card">
-                <h2>Daily Hours Trend</h2>
-                <canvas id="dailyHoursChart"></canvas>
-            </div>
-            <div class="chart-card">
-                <h2>Hours by Company</h2>
-                <canvas id="companyHoursChart"></canvas>
-            </div>
-            <div class="chart-card">
-                <h2>Hours by Nature of Work</h2>
-                <canvas id="natureHoursChart"></canvas>
-            </div>
-            <div class="chart-card">
-                <h2>Hours by Type of Work</h2>
-                <canvas id="typeHoursChart"></canvas>
-            </div>
+<div class="chart-section">
+    <div class="chart-card">
+        <h2>Daily Hours Trend</h2>
+        <div class="chart-canvas-wrapper"> <!-- New wrapper for canvas -->
+            <canvas id="dailyHoursChart"></canvas>
         </div>
-        
+    </div>
+    <div class="chart-card">
+        <h2>Hours by Company</h2>
+        <div class="chart-canvas-wrapper"> <!-- New wrapper for canvas -->
+            <canvas id="companyHoursChart"></canvas>
+        </div>
+    </div>
+    <div class="chart-card">
+        <h2>Hours by Nature of Work</h2>
+        <div class="chart-canvas-wrapper"> <!-- New wrapper for canvas -->
+            <canvas id="natureHoursChart"></canvas>
+        </div>
+    </div>
+    <div class="chart-card">
+        <h2>Hours by Type of Work</h2>
+        <div class="chart-canvas-wrapper"> <!-- New wrapper for canvas -->
+            <canvas id="typeHoursChart"></canvas>
+        </div>
+    </div>
+</div>        
         <h2>Raw Data Table</h2>
         <div class="table-container">
             <table id="dataTable">
@@ -97,4 +104,5 @@
 </body>
 
 </html>
+
 
