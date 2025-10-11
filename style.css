@@ -195,7 +195,7 @@ h2 {
 .chart-card {
     /* Darker background for charts */
     background-color: #2c2d3e; 
-    padding: 25px;
+    padding: 25px 25px 15px 25px; /* Adjust bottom padding if wrapper has top padding */
     border-radius: 10px;
     /* More pronounced chart card shadow */
     box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), inset 0 0 5px rgba(255,255,255,0.05);
@@ -205,6 +205,7 @@ h2 {
 
 .chart-card h2 {
     margin-top: 0;
+    margin-bottom: 0; /* Important if wrapper adds space after h2 */
     color: #00bcd4; 
     font-size: 1.5em;
     border-bottom: none;
@@ -280,4 +281,18 @@ table tbody tr:hover {
     .chart-section {
         grid-template-columns: 1fr;
     }
+}
+
+.chart-canvas-wrapper {
+    position: relative; /* Essential for Chart.js */
+    height: 350px;      /* Adjust this height as needed */
+    width: 100%;
+    /* You might want to add some top/bottom padding here if you like,
+       or adjust the .chart-card's padding to account for the wrapper. */
+    padding-top: 15px; /* Example: adds space between h2 and chart */
+}
+
+.chart-canvas-wrapper canvas {
+    height: 100% !important;
+    width: 100% !important;
 }
