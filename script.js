@@ -5,6 +5,94 @@ let allData = [];
 let filteredData = [];
 let charts = {}; // To store chart instances
 
+// --- New DOM Elements for Form ---
+const workEntryForm = document.getElementById('workEntryForm');
+const entryDateInput = document.getElementById('entryDate');
+const entryTimeHrsInput = document.getElementById('entryTimeHrs');
+const entryCompanyInput = document.getElementById('entryCompany');
+const entryNatureInput = document.getElementById('entryNature');
+const entryTypeInput = document.getElementById('entryType');
+const entryDescriptionInput = document.getElementById('entryDescription');
+const submitEntryBtn = document.getElementById('submitEntryBtn');
+const formStatusElem = document.getElementById('formStatus');
+
+// --- Initialization (Add form listener) ---
+document.addEventListener('DOMContentLoaded', () => {
+    // ... (existing date range setup and fetchData) ...
+
+    fetchData();
+    setupEventListeners(); // Call setupEventListeners as it includes form listener now
+    
+    // Set default for entryDate to today's date
+    entryDateInput.value = new Date().toISOString().split('T')[0];
+});
+
+function setupEventListeners() {
+    applyFiltersBtn.addEventListener('click', applyFilters);
+    resetFiltersBtn.addEventListener('click', resetFilters);
+    // NEW: Add event listener for form submission
+    workEntryForm.addEventListener('submit', handleFormSubmit);
+}
+
+// ... (your handleAppsScriptResponse, fetchData, populateFilterOptions, etc. functions) ...
+
+// --- NEW: Handle Form Submission ---
+async function handleFormSubmit(event) {
+    event.preventDefault(); // Prevent default form submission and page reload
+
+    formStatusElem.textContent = 'Submitting...';
+    formStatusElem.style.color = '#007bff'; // Blue for submitting
+
+    const newEntry = {
+        'Date': entryDateInput.value,
+        'Time (hrs)': parseFloat(entryTimeHrsInput.value),
+        'Company Worked For': entryCompanyInput.value,
+        'Nature of Work': entryNatureInput.value,
+        'Type of Work': entryTypeInput.value,
+        'Description of Work': entryDescriptionInput.value,
+        // Timestamp will be added by Apps Script
+    };
+
+    try {
+        // We'll use a direct fetch POST request for submission.
+        // Apps Script's doPost automatically includes CORS headers usually.
+        const response = await fetch(SCRIPT_URL, {
+            method: 'POST',
+            mode: 'cors', // Essential for cross-origin POST
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(newEntry),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json(); // Apps Script might return a success message
+
+        if (result.status === 'success') {
+            formStatusElem.textContent = 'Entry added successfully!';
+            formStatusElem.style.color = '#28a745'; // Green for success
+            workEntryForm.reset(); // Clear form fields
+            entryDateInput.value = new Date().toISOString().split('T')[0]; // Reset date to today
+
+            // Re-fetch all data to update dashboard
+            // Instead of full refetch, we can often optimistically add the new entry to 'allData'
+            // For simplicity and full data consistency, we'll refetch everything.
+            await fetchData();
+
+        } else {
+            throw new Error(result.message || 'Failed to add entry.');
+        }
+
+    } catch (error) {
+        console.error('Error submitting data:', error);
+        formStatusElem.textContent = `Error: ${error.message}`;
+        formStatusElem.style.color = '#dc3545'; // Red for error
+    }
+}
+
 // --- DOM Elements ---
 const startDateInput = document.getElementById('startDate');
 const endDateInput = document.getElementById('endDate');
@@ -431,3 +519,4 @@ function renderTypeHoursChart() {
         }
     });
 }
+
