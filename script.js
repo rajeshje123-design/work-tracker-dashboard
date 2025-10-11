@@ -35,44 +35,43 @@ document.addEventListener('DOMContentLoaded', () => {
 function setupEventListeners() {
     applyFiltersBtn.addEventListener('click', applyFilters);
     resetFiltersBtn.addEventListener('click', resetFilters);
+
+    // --- NEW: Add change listeners for cascading filters ---
+    companyFilter.addEventListener('change', onCompanyFilterChange);
+    natureFilter.addEventListener('change', onNatureFilterChange);
+    // typeFilter change doesn't need to trigger other filter updates, only applyFilters
 }
 
 // --- JSONP Callback Function ---
-// This function will be called by the Apps Script response
 function handleAppsScriptResponse(data) {
     console.log("Data received via JSONP:", data);
-    // Process raw data: convert date strings to Date objects, ensure numeric 'Time (hrs)'
     allData = data.map(row => {
-        // --- NOTE: These column names must match the cleaned headers in your Apps Script ---
-        // For example, 'Time (hrs)' in your sheet becomes 'Time_hrs' in the script
         const dateStr = row.Date;
         const timeHrs = parseFloat(row.Time_hrs);
         const company = row.Company_Worked_For;
         const nature = row.Nature_of_Work;
         const type = row.Type_of_Work;
-        const description = row.Description_of_Work; // Ensure Description is also captured
+        const description = row.Description_of_Work;
 
         return {
-            ...row, // Keep all original fields for table display if needed
+            ...row,
             parsedDate: dateStr ? new Date(dateStr) : null,
-            Time_hrs: isNaN(timeHrs) ? 0 : timeHrs, // Ensure it's a number
+            Time_hrs: isNaN(timeHrs) ? 0 : timeHrs,
             Company_Worked_For: company || 'N/A',
             Nature_of_Work: nature || 'N/A',
             Type_of_Work: type || 'N/A',
-            Description_of_Work: description || 'N/A' // Add description
+            Description_of_Work: description || 'N/A'
         };
-    }).filter(row => row.parsedDate !== null); // Filter out rows with invalid dates
+    }).filter(row => row.parsedDate !== null);
 
-    populateFilterOptions();
-    applyFilters(); // Apply initial filters to show data
+    // Initial population of company filter and then trigger applyFilters
+    populateCompanyFilter();
+    applyFilters();
 }
-
 
 // --- Data Fetching (modified to use JSONP) ---
 function fetchData() {
-    // Dynamically create a script tag to make a JSONP request
     const script = document.createElement('script');
-    // The callback function name 'handleAppsScriptResponse' must match the function we defined above
     script.src = SCRIPT_URL + '?callback=handleAppsScriptResponse';
     document.body.appendChild(script);
 
@@ -81,10 +80,7 @@ function fetchData() {
         alert('Failed to load data. Please check the Apps Script URL and deployment.');
     };
 
-    // Clean up the script tag after it's loaded (or failed).
-    // This is important to prevent too many script tags in the DOM over time.
     script.onload = () => {
-        // A small delay ensures the script has fully executed its callback
         setTimeout(() => {
             if (script.parentNode) {
                 document.body.removeChild(script);
@@ -93,19 +89,37 @@ function fetchData() {
     };
 }
 
+// --- Filter Population Functions (Refactored for cascading) ---
 
-// --- Filter Population ---
-function populateFilterOptions() {
+function populateCompanyFilter() {
     const companies = [...new Set(allData.map(item => item.Company_Worked_For))].sort();
-    const natures = [...new Set(allData.map(item => item.Nature_of_Work))].sort();
-    const types = [...new Set(allData.map(item => item.Type_of_Work))].sort();
-
     populateSelect(companyFilter, companies);
+    // After populating, ensure the currently selected value is valid, or reset to 'All'
+    if (!companies.includes(companyFilter.value) && companyFilter.value !== '') {
+        companyFilter.value = '';
+    }
+}
+
+function populateNatureFilter(dataContext) {
+    const natures = [...new Set(dataContext.map(item => item.Nature_of_Work))].sort();
     populateSelect(natureFilter, natures);
+    // Reset if current value is no longer valid
+    if (!natures.includes(natureFilter.value) && natureFilter.value !== '') {
+        natureFilter.value = '';
+    }
+}
+
+function populateTypeFilter(dataContext) {
+    const types = [...new Set(dataContext.map(item => item.Type_of_Work))].sort();
     populateSelect(typeFilter, types);
+    // Reset if current value is no longer valid
+    if (!types.includes(typeFilter.value) && typeFilter.value !== '') {
+        typeFilter.value = '';
+    }
 }
 
 function populateSelect(selectElement, options) {
+    const currentValue = selectElement.value; // Store current selection
     // Keep 'All' option, then add new options
     while (selectElement.children.length > 1) {
         selectElement.removeChild(selectElement.lastChild);
@@ -116,13 +130,55 @@ function populateSelect(selectElement, options) {
         opt.textContent = option;
         selectElement.appendChild(opt);
     });
+    // Try to restore previous selection if it's still valid, otherwise default to 'All'
+    if (options.includes(currentValue)) {
+        selectElement.value = currentValue;
+    } else {
+        selectElement.value = ''; // Reset to 'All'
+    }
 }
 
-// --- Filtering Logic ---
+
+// --- Event Handlers for Cascading Filters ---
+function onCompanyFilterChange() {
+    // Filter `allData` by selected company AND current date range
+    const currentStartDate = new Date(startDateInput.value);
+    const currentEndDate = new Date(endDateInput.value);
+    currentEndDate.setHours(23, 59, 59, 999);
+
+    const dataFilteredByCompanyAndDate = allData.filter(row => {
+        const rowDate = row.parsedDate;
+        const companyMatch = companyFilter.value === '' || row.Company_Worked_For === companyFilter.value;
+        return rowDate && rowDate >= currentStartDate && rowDate <= currentEndDate && companyMatch;
+    });
+
+    populateNatureFilter(dataFilteredByCompanyAndDate); // Populate Nature based on company and date
+    populateTypeFilter(dataFilteredByCompanyAndDate); // Also update type based on company and date
+    applyFilters(); // Re-apply all filters to update dashboard
+}
+
+function onNatureFilterChange() {
+    // Filter `allData` by selected company, nature AND current date range
+    const currentStartDate = new Date(startDateInput.value);
+    const currentEndDate = new Date(endDateInput.value);
+    currentEndDate.setHours(23, 59, 59, 999);
+
+    const dataFilteredByCompanyNatureAndDate = allData.filter(row => {
+        const rowDate = row.parsedDate;
+        const companyMatch = companyFilter.value === '' || row.Company_Worked_For === companyFilter.value;
+        const natureMatch = natureFilter.value === '' || row.Nature_of_Work === natureFilter.value;
+        return rowDate && rowDate >= currentStartDate && rowDate <= currentEndDate && companyMatch && natureMatch;
+    });
+
+    populateTypeFilter(dataFilteredByCompanyNatureAndDate); // Populate Type based on company, nature and date
+    applyFilters(); // Re-apply all filters to update dashboard
+}
+
+
+// --- Filtering Logic (now cleaner as population is handled elsewhere) ---
 function applyFilters() {
     const start = new Date(startDateInput.value);
     const end = new Date(endDateInput.value);
-    // Adjust end date to include the whole day
     end.setHours(23, 59, 59, 999);
 
     const selectedCompany = companyFilter.value;
@@ -135,7 +191,6 @@ function applyFilters() {
         const natureMatch = selectedNature === '' || row.Nature_of_Work === selectedNature;
         const typeMatch = selectedType === '' || row.Type_of_Work === selectedType;
 
-        // Ensure rowDate is valid before comparison
         return rowDate && rowDate >= start && rowDate <= end && companyMatch && natureMatch && typeMatch;
     });
 
@@ -143,19 +198,21 @@ function applyFilters() {
 }
 
 function resetFilters() {
-    // Reset date range (e.g., last 30 days)
     const today = new Date();
     const thirtyDaysAgo = new Date(today);
     thirtyDaysAgo.setDate(today.getDate() - 30);
     startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
     endDateInput.value = today.toISOString().split('T')[0];
 
-    // Reset select filters
+    // Reset select filters to 'All'
     companyFilter.value = '';
     natureFilter.value = '';
     typeFilter.value = '';
 
-    applyFilters(); // Re-apply filters with reset values
+    // Re-populate and apply
+    populateCompanyFilter(); // This will also cascade reset others
+    onCompanyFilterChange(); // Trigger the change handler for company to reset nature/type options
+    // applyFilters will be called by onCompanyFilterChange
 }
 
 // --- Dashboard Update (Summary, Charts, Table) ---
@@ -182,7 +239,6 @@ function updateSummaryCards() {
 function renderDataTable() {
     dataTableBody.innerHTML = ''; // Clear existing rows
 
-    // Only render if filteredData is not empty
     if (filteredData.length === 0) {
         const tr = document.createElement('tr');
         tr.innerHTML = `<td colspan="6" style="text-align: center; color: #c0c0d8;">No data available for the selected filters.</td>`;
@@ -205,7 +261,6 @@ function renderDataTable() {
 }
 
 // --- Chart Rendering Functions ---
-// Helper to destroy existing chart instances before re-rendering
 function destroyChart(chartId) {
     if (charts[chartId]) {
         charts[chartId].destroy();
@@ -218,7 +273,6 @@ function renderDailyHoursChart() {
     destroyChart('dailyHoursChart');
     const ctx = document.getElementById('dailyHoursChart').getContext('2d');
 
-    // Group hours by date
     const dailyHours = filteredData.reduce((acc, row) => {
         if (row.parsedDate) {
             const dateKey = row.parsedDate.toISOString().split('T')[0]; // YYYY-MM-DD
