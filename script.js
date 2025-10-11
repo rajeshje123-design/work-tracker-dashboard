@@ -1,4 +1,6 @@
+// --- IMPORTANT: Ensure this SCRIPT_URL is correct ---
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyktm_t4CX3XUzK5XfRNZHhaxpia31254CkmvACOaM-qcy-RJf744S3x_FjOv4jwzFriA/exec';
+
 let allData = [];
 let filteredData = [];
 let charts = {}; // To store chart instances
@@ -35,40 +37,62 @@ function setupEventListeners() {
     resetFiltersBtn.addEventListener('click', resetFilters);
 }
 
-// --- Data Fetching ---
-async function fetchData() {
-    try {
-        const response = await fetch(SCRIPT_URL);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        const rawData = await response.json();
+// --- JSONP Callback Function ---
+// This function will be called by the Apps Script response
+function handleAppsScriptResponse(data) {
+    console.log("Data received via JSONP:", data);
+    // Process raw data: convert date strings to Date objects, ensure numeric 'Time (hrs)'
+    allData = data.map(row => {
+        // --- NOTE: These column names must match the cleaned headers in your Apps Script ---
+        // For example, 'Time (hrs)' in your sheet becomes 'Time_hrs' in the script
+        const dateStr = row.Date;
+        const timeHrs = parseFloat(row.Time_hrs);
+        const company = row.Company_Worked_For;
+        const nature = row.Nature_of_Work;
+        const type = row.Type_of_Work;
+        const description = row.Description_of_Work; // Ensure Description is also captured
 
-        // Process raw data: convert date strings to Date objects, ensure numeric 'Time (hrs)'
-        allData = rawData.map(row => {
-            const dateStr = row.Date; // Assuming 'Date' is the header from your sheet
-            const timeHrs = parseFloat(row.Time_hrs); // 'Time (hrs)' becomes 'Time_hrs' from Apps Script
-            const company = row.Company_Worked_For;
-            const nature = row.Nature_of_Work;
-            const type = row.Type_of_Work;
+        return {
+            ...row, // Keep all original fields for table display if needed
+            parsedDate: dateStr ? new Date(dateStr) : null,
+            Time_hrs: isNaN(timeHrs) ? 0 : timeHrs, // Ensure it's a number
+            Company_Worked_For: company || 'N/A',
+            Nature_of_Work: nature || 'N/A',
+            Type_of_Work: type || 'N/A',
+            Description_of_Work: description || 'N/A' // Add description
+        };
+    }).filter(row => row.parsedDate !== null); // Filter out rows with invalid dates
 
-            return {
-                ...row, // Keep all original fields
-                parsedDate: dateStr ? new Date(dateStr) : null,
-                Time_hrs: isNaN(timeHrs) ? 0 : timeHrs, // Ensure it's a number
-                Company_Worked_For: company || 'N/A',
-                Nature_of_Work: nature || 'N/A',
-                Type_of_Work: type || 'N/A'
-            };
-        }).filter(row => row.parsedDate !== null); // Filter out rows with invalid dates
-
-        populateFilterOptions();
-        applyFilters(); // Apply initial filters to show data
-    } catch (error) {
-        console.error('Error fetching data:', error);
-        alert('Failed to load data. Please check the Apps Script URL and deployment, or console for more details.');
-    }
+    populateFilterOptions();
+    applyFilters(); // Apply initial filters to show data
 }
+
+
+// --- Data Fetching (modified to use JSONP) ---
+function fetchData() {
+    // Dynamically create a script tag to make a JSONP request
+    const script = document.createElement('script');
+    // The callback function name 'handleAppsScriptResponse' must match the function we defined above
+    script.src = SCRIPT_URL + '?callback=handleAppsScriptResponse';
+    document.body.appendChild(script);
+
+    script.onerror = () => {
+        console.error('Error loading Apps Script data via JSONP. Check URL and Apps Script deployment.');
+        alert('Failed to load data. Please check the Apps Script URL and deployment.');
+    };
+
+    // Clean up the script tag after it's loaded (or failed).
+    // This is important to prevent too many script tags in the DOM over time.
+    script.onload = () => {
+        // A small delay ensures the script has fully executed its callback
+        setTimeout(() => {
+            if (script.parentNode) {
+                document.body.removeChild(script);
+            }
+        }, 100);
+    };
+}
+
 
 // --- Filter Population ---
 function populateFilterOptions() {
@@ -111,7 +135,8 @@ function applyFilters() {
         const natureMatch = selectedNature === '' || row.Nature_of_Work === selectedNature;
         const typeMatch = selectedType === '' || row.Type_of_Work === selectedType;
 
-        return rowDate >= start && rowDate <= end && companyMatch && natureMatch && typeMatch;
+        // Ensure rowDate is valid before comparison
+        return rowDate && rowDate >= start && rowDate <= end && companyMatch && natureMatch && typeMatch;
     });
 
     updateDashboard();
@@ -157,6 +182,14 @@ function updateSummaryCards() {
 function renderDataTable() {
     dataTableBody.innerHTML = ''; // Clear existing rows
 
+    // Only render if filteredData is not empty
+    if (filteredData.length === 0) {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `<td colspan="6" style="text-align: center;">No data available for the selected filters.</td>`;
+        dataTableBody.appendChild(tr);
+        return;
+    }
+
     filteredData.forEach(row => {
         const tr = document.createElement('tr');
         tr.innerHTML = `
@@ -187,8 +220,10 @@ function renderDailyHoursChart() {
 
     // Group hours by date
     const dailyHours = filteredData.reduce((acc, row) => {
-        const dateKey = row.parsedDate.toISOString().split('T')[0]; // YYYY-MM-DD
-        acc[dateKey] = (acc[dateKey] || 0) + row.Time_hrs;
+        if (row.parsedDate) {
+            const dateKey = row.parsedDate.toISOString().split('T')[0]; // YYYY-MM-DD
+            acc[dateKey] = (acc[dateKey] || 0) + row.Time_hrs;
+        }
         return acc;
     }, {});
 
@@ -214,7 +249,8 @@ function renderDailyHoursChart() {
                 x: {
                     type: 'time',
                     time: {
-                        unit: 'day'
+                        unit: 'day',
+                        tooltipFormat: 'PPP' // e.g., 'Jan 1, 2024'
                     },
                     title: {
                         display: true,
@@ -261,11 +297,13 @@ function renderCompanyHoursChart() {
                 data: data,
                 backgroundColor: [
                     'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)',
-                    'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)'
+                    'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)',
+                    'rgba(200, 100, 200, 0.7)', 'rgba(100, 200, 100, 0.7)'
                 ],
                 borderColor: [
                     'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)'
+                    'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)',
+                    'rgba(200, 100, 200, 1)', 'rgba(100, 200, 100, 1)'
                 ],
                 borderWidth: 1
             }]
@@ -313,7 +351,7 @@ function renderNatureHoursChart() {
                 data: data,
                 backgroundColor: [
                     '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
-                    '#FF5733', '#C70039', '#900C3F', '#581845'
+                    '#FF5733', '#C70039', '#900C3F', '#581845', '#1E88E5', '#D81B60'
                 ],
                 hoverOffset: 4
             }]
@@ -348,7 +386,7 @@ function renderTypeHoursChart() {
     destroyChart('typeHoursChart');
     const ctx = document.getElementById('typeHoursChart').getContext('2d');
 
-    const typeData = filteredData.reduce((acc, row) => { // Fixed missing argument to reduce
+    const typeData = filteredData.reduce((acc, row) => {
         acc[row.Type_of_Work] = (acc[row.Type_of_Work] || 0) + row.Time_hrs;
         return acc;
     }, {});
