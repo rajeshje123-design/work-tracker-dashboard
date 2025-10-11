@@ -2,7 +2,8 @@
 const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyktm_t4CX3XUzK5XfRNZHhaxpia31254CkmvACOaM-qcy-RJf744S3x_FjOv4jwzFriA/exec';
 
 let allData = [];
-let filteredData = [];
+// Make filteredData explicitly global if you suspect scope issues from other scripts or environments
+window.filteredData = []; // <--- CHANGE THIS LINE
 let charts = {}; // To store chart instances
 
 // --- DOM Elements ---
@@ -502,3 +503,4 @@ function renderTypeHoursChart() {
         }
     });
 }
+
