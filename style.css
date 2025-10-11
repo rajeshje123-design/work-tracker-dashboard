@@ -2,35 +2,34 @@ body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     margin: 0;
     padding: 20px;
-    /* Option 4: Darker Blue Abstract Waves */
-    background-color: #2c3e50; /* Fallback for older browsers */
-    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1000 1000'%3E%3Cdefs%3E%3Cfilter id='a' x='-50vw' y='-50vh' width='100vw' height='100vh'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.005 0.005' numOctaves='2' seed='1'%3E%3Canimate attributeName='baseFrequency' values='0.005 0.005;0.006 0.006;0.005 0.005' dur='60s' repeatCount='indefinite'/%3E%3C/feTurbulence%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3CfeComposite in='SourceGraphic' in2='goo' operator='atop'/%3E%3C/filter%3E%3Cfilter id='b'%3E%3CfeGaussianBlur stdDeviation='50' result='blur'/%3E%3CfeColorMatrix in='blur' mode='matrix' values='1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 30 -15' result='goo'/%3E%3C/filter%3E%3Cpath id='c' d='M250 100Q150 200 100 300Q50 400 100 500Q150 600 250 700Q350 800 500 800Q650 800 750 700Q850 600 900 500Q950 400 900 300Q850 200 750 100Q650 0 500 0Q350 0 250 100Z'/%3E%3C/defs%3E%3Cg filter='url(%23b)'%3E%3Cuse href='%23c' x='0' y='0' fill='%236a0dad' opacity='0.7'%3E%3CanimateMotion dur='40s' repeatCount='indefinite' path='M0,0 q200,-50 400,0 t400,0 q200,50 400,0 t400,0' /%3E%3C/use%3E%3Cuse href='%23c' x='-100' y='-50' fill='%234a007a' opacity='0.6'%3E%3CanimateMotion dur='50s' repeatCount='indefinite' path='M0,0 q-200,50 -400,0 t-400,0 q-200,-50 -400,0 t-400,0' /%3E%3C/use%3E%3Cuse href='%23c' x='100' y='50' fill='%239370db' opacity='0.5'%3E%3CanimateMotion dur='70s' repeatCount='indefinite' path='M0,0 q100,100 200,0 t200,0 q100,-100 200,0 t200,0' /%3E%3C/use%3E%3C/g%3E%3C/svg%3E");
-    background-size: cover;
-    background-attachment: fixed; /* Keeps background fixed when scrolling */
-    color: #333; /* You might want to adjust text colors for contrast if needed */
+    background-color: #1a1a2e; /* Dark background */
+    color: #e0e0e0; /* Light text for contrast */
 }
 
 .dashboard-container {
     max-width: 1200px;
     margin: 20px auto;
-    background-color: #ffffff;
+    background-color: #21213b; /* Slightly lighter dark for the main container */
     padding: 30px;
-    border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 12px; /* Slightly more rounded corners */
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.5); /* More pronounced shadow for depth */
 }
 
 h1 {
     text-align: center;
-    color: #0056b3;
+    color: #00bcd4; /* Vibrant teal for main heading */
     margin-bottom: 30px;
+    font-size: 2.5em;
+    text-shadow: 0 0 10px rgba(0, 188, 212, 0.4); /* Subtle glow */
 }
 
 h2 {
-    color: #0056b3;
-    border-bottom: 2px solid #e0e0e0;
+    color: #00bcd4; /* Vibrant teal for section headings */
+    border-bottom: 2px solid #3d3d5c; /* Darker border for contrast */
     padding-bottom: 10px;
     margin-top: 40px;
     margin-bottom: 20px;
+    font-size: 1.8em;
 }
 
 .filters {
@@ -38,44 +37,54 @@ h2 {
     flex-wrap: wrap;
     gap: 15px;
     align-items: center;
-    background-color: #e9f2f9;
+    background-color: #2c2c4a; /* Darker background for filters */
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 10px;
     margin-bottom: 30px;
-    box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
+    box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+    border: 1px solid #3d3d5c; /* Subtle border */
 }
 
 .filters label {
     font-weight: bold;
-    color: #004085;
+    color: #c0c0d8; /* Lighter text for labels */
 }
 
 .filters input[type="date"],
 .filters select {
     padding: 10px;
-    border: 1px solid #cce0f0;
-    border-radius: 5px;
+    border: 1px solid #3d3d5c;
+    border-radius: 6px;
     font-size: 1rem;
-    background-color: #fff;
+    background-color: #3d3d5c; /* Dark input background */
+    color: #e0e0e0; /* Light text in inputs */
     min-width: 150px;
+    appearance: none; /* Remove default arrow on select */
+    background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22 width%3D%22292.4%22 height%3D%22292.4%22 viewBox%3D%220 0 292.4 292.4%22%3E%3Cpath fill%3D%22%23e0e0e0%22 d%3D%22M287 197.35L146.2 56.6 5.4 197.35l20.45 20.45L146.2 97.5l120.35 120.3z%22%2F%3E%3C%2Fsvg%3E'); /* Custom arrow */
+    background-repeat: no-repeat;
+    background-position: right 8px top 50%;
+    background-size: 0.65em auto;
 }
 
 .filters button {
     padding: 10px 20px;
     border: none;
-    border-radius: 5px;
+    border-radius: 6px;
     font-size: 1rem;
     cursor: pointer;
-    transition: background-color 0.3s ease;
+    transition: background-color 0.3s ease, transform 0.2s ease;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
 }
 
 #applyFilters {
-    background-color: #007bff;
-    color: white;
+    background-color: #00bcd4; /* Vibrant teal */
+    color: #1a1a2e; /* Dark text on vibrant button */
+    font-weight: bold;
 }
 
 #applyFilters:hover {
-    background-color: #0056b3;
+    background-color: #00a8bd;
+    transform: translateY(-2px);
 }
 
 #resetFilters {
@@ -85,6 +94,7 @@ h2 {
 
 #resetFilters:hover {
     background-color: #5a6268;
+    transform: translateY(-2px);
 }
 
 .summary-cards {
@@ -96,33 +106,63 @@ h2 {
 }
 
 .card {
-    background-color: #e8f5e9; /* Light green */
-    border-radius: 8px;
+    background-color: #2c2c4a; /* Darker background for cards */
+    border-radius: 10px;
     padding: 25px;
     flex: 1;
     min-width: 250px;
     text-align: center;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-    transition: transform 0.2s ease-in-out;
-    border-left: 5px solid #4CAF50; /* Green accent */
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    transition: transform 0.2s ease-in-out, border-color 0.3s ease;
+    border: 1px solid #3d3d5c; /* Subtle border */
+    position: relative;
+    overflow: hidden; /* For glow effect */
 }
 
-.card:hover {
-    transform: translateY(-5px);
+.card::before { /* Animated border glow */
+    content: '';
+    position: absolute;
+    top: -50%;
+    left: -50%;
+    width: 200%;
+    height: 200%;
+    background: radial-gradient(circle at center, rgba(0, 188, 212, 0.3) 0%, transparent 70%);
+    transform: rotate(45deg);
+    animation: rotateGlow 10s linear infinite;
+    opacity: 0;
+    transition: opacity 0.3s ease;
 }
+
+.card:hover::before {
+    opacity: 1;
+}
+
+@keyframes rotateGlow {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+}
+
 
 .card h3 {
     margin-top: 0;
-    color: #2e7d32; /* Darker green */
-    font-size: 1.2em;
+    color: #a0aec0; /* Muted light text for card titles */
+    font-size: 1.1em;
+    margin-bottom: 15px;
 }
 
 .card p {
-    font-size: 2.5em;
+    font-size: 2.8em; /* Slightly larger for impact */
     font-weight: bold;
-    color: #1b5e20; /* Even darker green */
+    color: #00bcd4; /* Vibrant teal for numbers */
     margin-bottom: 0;
+    text-shadow: 0 0 8px rgba(0, 188, 212, 0.3); /* Subtle glow for numbers */
 }
+
+/* Specific colors for summary cards (optional, but good for differentiation) */
+#totalHours.card p { color: #8bc34a; text-shadow: 0 0 8px rgba(139, 195, 74, 0.3); } /* Green */
+#totalCompanies.card p { color: #ffeb3b; text-shadow: 0 0 8px rgba(255, 235, 59, 0.3); } /* Yellow */
+#uniqueNatures.card p { color: #ff5722; text-shadow: 0 0 8px rgba(255, 87, 34, 0.3); } /* Orange */
+
 
 .chart-section {
     display: grid;
@@ -132,16 +172,16 @@ h2 {
 }
 
 .chart-card {
-    background-color: #ffffff;
+    background-color: #2c2c4a; /* Darker background for charts */
     padding: 25px;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
-    border-left: 5px solid #007bff;
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+    border: 1px solid #3d3d5c; /* Subtle border */
 }
 
 .chart-card h2 {
     margin-top: 0;
-    color: #0056b3;
+    color: #00bcd4; /* Vibrant teal for chart titles */
     font-size: 1.5em;
     border-bottom: none;
     padding-bottom: 0;
@@ -149,10 +189,11 @@ h2 {
 
 .table-container {
     overflow-x: auto;
-    background-color: #ffffff;
-    border-radius: 8px;
-    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+    background-color: #2c2c4a; /* Darker background for table container */
+    border-radius: 10px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
     padding: 20px;
+    border: 1px solid #3d3d5c; /* Subtle border */
 }
 
 table {
@@ -163,24 +204,25 @@ table {
 
 table th, table td {
     padding: 12px 15px;
-    border: 1px solid #e0e0e0;
+    border: 1px solid #3d3d5c; /* Darker borders for table cells */
     text-align: left;
+    color: #c0c0d8; /* Light text in table */
 }
 
 table th {
-    background-color: #f8f8f8;
+    background-color: #3d3d5c; /* Dark background for table headers */
     font-weight: bold;
-    color: #555;
+    color: #00bcd4; /* Vibrant teal for table headers */
     text-transform: uppercase;
     font-size: 0.9em;
 }
 
 table tbody tr:nth-child(even) {
-    background-color: #f9f9f9;
+    background-color: #2c2c4a; /* Slightly darker even rows */
 }
 
 table tbody tr:hover {
-    background-color: #f0f8ff;
+    background-color: #3d3d5c; /* Hover effect */
 }
 
 /* Responsive adjustments */
@@ -198,7 +240,7 @@ table tbody tr:hover {
     .filters select,
     .filters button {
         width: 100%;
-        box-sizing: border-box; /* Include padding and border in element's total width */
+        box-sizing: border-box;
     }
 
     .summary-cards {
@@ -210,4 +252,3 @@ table tbody tr:hover {
     }
 
 }
-
