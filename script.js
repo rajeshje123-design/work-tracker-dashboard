@@ -400,6 +400,8 @@ function renderNatureHoursChart() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false, // <--- ADD THIS LINE
+            aspectRatio: 1, // You can play with this, e.g., 1 for square, 1.5 for wider, 0.8 for taller
             plugins: {
                 legend: {
                     position: 'right',
@@ -456,6 +458,8 @@ function renderTypeHoursChart() {
         },
         options: {
             responsive: true,
+            maintainAspectRatio: false, // <--- ADD THIS LINE
+            aspectRatio: 2, // <--- You can adjust this for bar charts (e.g., 2 makes it twice as wide as tall)
             scales: {
                 x: {
                     title: {
