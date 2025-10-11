@@ -185,7 +185,7 @@ function renderDataTable() {
     // Only render if filteredData is not empty
     if (filteredData.length === 0) {
         const tr = document.createElement('tr');
-        tr.innerHTML = `<td colspan="6" style="text-align: center;">No data available for the selected filters.</td>`;
+        tr.innerHTML = `<td colspan="6" style="text-align: center; color: #c0c0d8;">No data available for the selected filters.</td>`;
         dataTableBody.appendChild(tr);
         return;
     }
@@ -237,10 +237,10 @@ function renderDailyHoursChart() {
             datasets: [{
                 label: 'Hours',
                 data: data,
-                borderColor: 'rgb(75, 192, 192)',
-                backgroundColor: 'rgba(75, 192, 192, 0.2)',
+                borderColor: '#00bcd4', /* Vibrant teal */
+                backgroundColor: 'rgba(0, 188, 212, 0.2)', /* Lighter teal fill */
                 fill: true,
-                tension: 0.1
+                tension: 0.3 /* Slightly smoother curve */
             }]
         },
         options: {
@@ -250,25 +250,47 @@ function renderDailyHoursChart() {
                     type: 'time',
                     time: {
                         unit: 'day',
-                        tooltipFormat: 'PPP' // e.g., 'Jan 1, 2024'
+                        tooltipFormat: 'MMM D, YYYY' // e.g., 'Jan 1, 2024'
                     },
                     title: {
                         display: true,
-                        text: 'Date'
+                        text: 'Date',
+                        color: '#c0c0d8' // Light text for axis title
+                    },
+                    ticks: {
+                        color: '#a0aec0' // Light text for axis ticks
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)' // Light grid lines
                     }
                 },
                 y: {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Hours'
+                        text: 'Hours',
+                        color: '#c0c0d8'
+                    },
+                    ticks: {
+                        color: '#a0aec0'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
                     }
                 }
             },
             plugins: {
                 tooltip: {
                     mode: 'index',
-                    intersect: false
+                    intersect: false,
+                    backgroundColor: 'rgba(0,0,0,0.7)', // Dark tooltip background
+                    titleColor: '#00bcd4', // Teal tooltip title
+                    bodyColor: '#e0e0e0' // Light tooltip body text
+                },
+                legend: {
+                    labels: {
+                        color: '#c0c0d8' // Light text for legend
+                    }
                 }
             }
         }
@@ -296,14 +318,10 @@ function renderCompanyHoursChart() {
                 label: 'Hours',
                 data: data,
                 backgroundColor: [
-                    'rgba(255, 99, 132, 0.7)', 'rgba(54, 162, 235, 0.7)', 'rgba(255, 206, 86, 0.7)',
-                    'rgba(75, 192, 192, 0.7)', 'rgba(153, 102, 255, 0.7)', 'rgba(255, 159, 64, 0.7)',
-                    'rgba(200, 100, 200, 0.7)', 'rgba(100, 200, 100, 0.7)'
-                ],
+                    '#00bcd4', '#8bc34a', '#ffeb3b', '#ff5722', '#673ab7', '#e91e63', '#009688', '#ffc107'
+                ], /* Vibrant color palette */
                 borderColor: [
-                    'rgba(255, 99, 132, 1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)',
-                    'rgba(75, 192, 192, 1)', 'rgba(153, 102, 255, 1)', 'rgba(255, 159, 64, 1)',
-                    'rgba(200, 100, 200, 1)', 'rgba(100, 200, 100, 1)'
+                    '#00a8bd', '#7cb342', '#fdd835', '#e64a19', '#5e35b1', '#d81b60', '#00796b', '#ffa000'
                 ],
                 borderWidth: 1
             }]
@@ -316,13 +334,38 @@ function renderCompanyHoursChart() {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Hours'
+                        text: 'Hours',
+                        color: '#c0c0d8'
+                    },
+                    ticks: {
+                        color: '#a0aec0'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
+                    }
+                },
+                y: {
+                    title: {
+                        display: true,
+                        text: 'Company',
+                        color: '#c0c0d8'
+                    },
+                    ticks: {
+                        color: '#a0aec0'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
                     }
                 }
             },
             plugins: {
                 legend: {
                     display: false // No need for legend in single dataset bar chart
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.7)',
+                    titleColor: '#00bcd4',
+                    bodyColor: '#e0e0e0'
                 }
             }
         }
@@ -350,10 +393,9 @@ function renderNatureHoursChart() {
                 label: 'Hours',
                 data: data,
                 backgroundColor: [
-                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', '#9966FF', '#FF9F40',
-                    '#FF5733', '#C70039', '#900C3F', '#581845', '#1E88E5', '#D81B60'
-                ],
-                hoverOffset: 4
+                    '#00bcd4', '#8bc34a', '#ffeb3b', '#ff5722', '#673ab7', '#e91e63', '#009688', '#ffc107', '#2196f3', '#f44336'
+                ], /* Vibrant color palette */
+                hoverOffset: 8 /* Slightly larger hover offset */
             }]
         },
         options: {
@@ -361,8 +403,14 @@ function renderNatureHoursChart() {
             plugins: {
                 legend: {
                     position: 'right',
+                    labels: {
+                        color: '#c0c0d8' // Light text for legend
+                    }
                 },
                 tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.7)',
+                    titleColor: '#00bcd4',
+                    bodyColor: '#e0e0e0',
                     callbacks: {
                         label: function(context) {
                             let label = context.label || '';
@@ -401,8 +449,8 @@ function renderTypeHoursChart() {
             datasets: [{
                 label: 'Hours',
                 data: data,
-                backgroundColor: 'rgba(153, 102, 255, 0.7)',
-                borderColor: 'rgba(153, 102, 255, 1)',
+                backgroundColor: '#673ab7', /* Deep purple accent */
+                borderColor: '#5e35b1',
                 borderWidth: 1
             }]
         },
@@ -412,24 +460,41 @@ function renderTypeHoursChart() {
                 x: {
                     title: {
                         display: true,
-                        text: 'Type of Work'
+                        text: 'Type of Work',
+                        color: '#c0c0d8'
+                    },
+                    ticks: {
+                        color: '#a0aec0'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
                     }
                 },
                 y: {
                     beginAtZero: true,
                     title: {
                         display: true,
-                        text: 'Hours'
+                        text: 'Hours',
+                        color: '#c0c0d8'
+                    },
+                    ticks: {
+                        color: '#a0aec0'
+                    },
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)'
                     }
                 }
             },
             plugins: {
                 legend: {
                     display: false
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0,0,0,0.7)',
+                    titleColor: '#00bcd4',
+                    bodyColor: '#e0e0e0'
                 }
             }
         }
     });
 }
-
-
