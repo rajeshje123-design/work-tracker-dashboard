@@ -1,108 +1,104 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Work Tracker Dashboard</title>
-    <link rel="stylesheet" href="style.css">
-    <!-- Chart.js library -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <!-- Chart.js Adapter for Date-Time scales (optional, but good for time series) -->
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Time Tracker</title>
+  <meta name="theme-color" content="#10131c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="WorkTracker">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns/dist/chartjs-adapter-date-fns.bundle.min.js"></script>
 </head>
 <body>
-    <div class="dashboard-container">
-        <h1>My Work Tracker Dashboard</h1>
+  <main class="dashboard-container">
+    <h1>Customer & Work Time Tracker</h1>
 
-        <div class="filters">
-            <label for="startDate">From:</label>
-            <input type="date" id="startDate">
-            <label for="endDate">To:</label>
-            <input type="date" id="endDate">
+    <p class="mobile-hint">Tip: On iPhone, open in Safari and tap <strong>Share → Add to Home Screen</strong> for an app-like experience.</p>
 
-            <label for="companyFilter">Company:</label>
-            <select id="companyFilter">
-                <option value="">All Companies</option>
-            </select>
+    <section class="panel">
+      <h2>Add Time Entry</h2>
+      <form id="entryForm" class="entry-form">
+        <label>Date
+          <input type="date" id="entryDate" required>
+        </label>
+        <label>Customer
+          <input type="text" id="entryCustomer" placeholder="Acme Inc" required>
+        </label>
+        <label>Work Level
+          <input type="text" id="entryWorkLevel" placeholder="Implementation / Support" required>
+        </label>
+        <label>Task
+          <input type="text" id="entryTask" placeholder="API integration" required>
+        </label>
+        <label>Hours
+          <input type="number" id="entryHours" min="0.25" step="0.25" required>
+        </label>
+        <label class="span-2">Description
+          <textarea id="entryDescription" rows="2" placeholder="What did you do?"></textarea>
+        </label>
+        <button type="submit" class="primary">Save Entry</button>
+      </form>
+    </section>
 
-            <label for="natureFilter">Nature:</label>
-            <select id="natureFilter">
-                <option value="">All Natures</option>
-            </select>
+    <section class="panel filters">
+      <h2>Filters</h2>
+      <label>From
+        <input type="date" id="startDate">
+      </label>
+      <label>To
+        <input type="date" id="endDate">
+      </label>
+      <label>Customer
+        <select id="customerFilter"><option value="">All Customers</option></select>
+      </label>
+      <label>Work Level
+        <select id="workLevelFilter"><option value="">All Work Levels</option></select>
+      </label>
+      <div class="filter-actions">
+        <button id="applyFilters" class="primary" type="button">Apply</button>
+        <button id="resetFilters" type="button">Reset</button>
+      </div>
+    </section>
 
-            <label for="typeFilter">Type:</label>
-            <select id="typeFilter">
-                <option value="">All Types</option>
-            </select>
 
-            <button id="applyFilters">Apply Filters</button>
-            <button id="resetFilters">Reset Filters</button>
-        </div>
+    <section class="panel storage-panel">
+      <h2>Storage</h2>
+      <p id="storageMode">Storage: Browser Local Storage (single device)</p>
+      <button id="syncNow" type="button">Sync from Google Drive</button>
+    </section>
 
-        <div class="summary-cards">
-            <div class="card">
-                <h3>Total Hours Tracked</h3>
-                <p id="totalHours">0</p>
-            </div>
-            <div class="card">
-                <h3>Total Companies</h3>
-                <p id="totalCompanies">0</p>
-            </div>
-            <div class="card">
-                <h3>Unique Projects (Nature)</h3>
-                <p id="uniqueNatures">0</p>
-            </div>
-        </div>
+    <section class="summary-cards">
+      <article class="card"><h3>Total Hours</h3><p id="totalHours">0.00</p></article>
+      <article class="card"><h3>Customers</h3><p id="totalCustomers">0</p></article>
+      <article class="card"><h3>Work Levels</h3><p id="totalWorkLevels">0</p></article>
+      <article class="card"><h3>Entries</h3><p id="totalEntries">0</p></article>
+    </section>
 
-<div class="chart-section">
-    <div class="chart-card">
-        <h2>Daily Hours Trend</h2>
-        <div class="chart-canvas-wrapper"> <!-- New wrapper for canvas -->
-            <canvas id="dailyHoursChart"></canvas>
-        </div>
-    </div>
-    <div class="chart-card">
-        <h2>Hours by Company</h2>
-        <div class="chart-canvas-wrapper"> <!-- New wrapper for canvas -->
-            <canvas id="companyHoursChart"></canvas>
-        </div>
-    </div>
-    <div class="chart-card">
-        <h2>Hours by Nature of Work</h2>
-        <div class="chart-canvas-wrapper"> <!-- New wrapper for canvas -->
-            <canvas id="natureHoursChart"></canvas>
-        </div>
-    </div>
-    <div class="chart-card">
-        <h2>Hours by Type of Work</h2>
-        <div class="chart-canvas-wrapper"> <!-- New wrapper for canvas -->
-            <canvas id="typeHoursChart"></canvas>
-        </div>
-    </div>
-</div>        
-        <h2>Raw Data Table</h2>
-        <div class="table-container">
-            <table id="dataTable">
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Time (hrs)</th>
-                        <th>Company Worked For</th>
-                        <th>Nature of Work</th>
-                        <th>Type of Work</th>
-                        <th>Description of Work</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <!-- Data will be inserted here by JavaScript -->
-                </tbody>
-            </table>
-        </div>
-    </div>
+    <section class="chart-section">
+      <article class="chart-card"><h2>Daily Hours</h2><canvas id="dailyHoursChart"></canvas></article>
+      <article class="chart-card"><h2>Hours by Customer</h2><canvas id="customerHoursChart"></canvas></article>
+      <article class="chart-card"><h2>Hours by Work Level</h2><canvas id="workLevelHoursChart"></canvas></article>
+    </section>
 
-    <script src="script.js"></script>
+    <section class="panel">
+      <h2>Time Entries</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th><th>Customer</th><th>Work Level</th><th>Task</th><th>Hours</th><th>Description</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="entriesTableBody"></tbody>
+        </table>
+      </div>
+    </section>
+  </main>
+
+  <script src="script.js"></script>
 </body>
-
 </html>
-
-

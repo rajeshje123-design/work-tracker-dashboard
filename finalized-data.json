@@ -1,0 +1,92 @@
+[
+  {
+    "id": "f4c4a94f-6ba1-4f58-bf14-10f719119001",
+    "date": "2026-03-01",
+    "customer": "Acme Corp",
+    "workLevel": "Implementation",
+    "task": "Kickoff and scope alignment",
+    "hours": 2.5,
+    "description": "Reviewed goals, timeline, and deliverables with customer team."
+  },
+  {
+    "id": "f4c4a94f-6ba1-4f58-bf14-10f719119002",
+    "date": "2026-03-02",
+    "customer": "Globex",
+    "workLevel": "Support",
+    "task": "Production issue triage",
+    "hours": 1.75,
+    "description": "Analyzed incident logs and provided fix recommendations."
+  },
+  {
+    "id": "f4c4a94f-6ba1-4f58-bf14-10f719119003",
+    "date": "2026-03-03",
+    "customer": "Initech",
+    "workLevel": "Consulting",
+    "task": "Monthly architecture review",
+    "hours": 1.5,
+    "description": "Reviewed current system design and optimization options."
+  },
+  {
+    "id": "f4c4a94f-6ba1-4f58-bf14-10f719119004",
+    "date": "2026-03-04",
+    "customer": "Umbrella Ltd",
+    "workLevel": "Development",
+    "task": "Feature API implementation",
+    "hours": 3,
+    "description": "Implemented API endpoint and unit-tested happy/error paths."
+  },
+  {
+    "id": "f4c4a94f-6ba1-4f58-bf14-10f719119005",
+    "date": "2026-03-05",
+    "customer": "Acme Corp",
+    "workLevel": "Documentation",
+    "task": "SOP update",
+    "hours": 1.25,
+    "description": "Updated onboarding runbook and handover checklist."
+  },
+  {
+    "id": "f4c4a94f-6ba1-4f58-bf14-10f719119006",
+    "date": "2026-03-06",
+    "customer": "Globex",
+    "workLevel": "Implementation",
+    "task": "Data mapping workshop",
+    "hours": 2,
+    "description": "Mapped customer source fields to target schema."
+  },
+  {
+    "id": "f4c4a94f-6ba1-4f58-bf14-10f719119007",
+    "date": "2026-03-07",
+    "customer": "Initech",
+    "workLevel": "Support",
+    "task": "UAT bug verification",
+    "hours": 1,
+    "description": "Validated fixes for three UAT defects and shared report."
+  },
+  {
+    "id": "f4c4a94f-6ba1-4f58-bf14-10f719119008",
+    "date": "2026-03-08",
+    "customer": "Acme Corp",
+    "workLevel": "Consulting",
+    "task": "Stakeholder planning call",
+    "hours": 1.5,
+    "description": "Planned milestones for next sprint and risk items."
+  },
+  {
+    "id": "f4c4a94f-6ba1-4f58-bf14-10f719119009",
+    "date": "2026-03-09",
+    "customer": "Umbrella Ltd",
+    "workLevel": "Support",
+    "task": "Performance log analysis",
+    "hours": 2.25,
+    "description": "Identified slow queries and suggested indexing strategy."
+  },
+  {
+    "id": "f4c4a94f-6ba1-4f58-bf14-10f719119010",
+    "date": "2026-03-10",
+    "customer": "Globex",
+    "workLevel": "Documentation",
+    "task": "Release notes",
+    "hours": 0.75,
+    "description": "Prepared release highlights and known limitations."
+  }
+]

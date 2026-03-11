@@ -1,506 +1,344 @@
-// --- IMPORTANT: Ensure this SCRIPT_URL is correct ---
-const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyktm_t4CX3XUzK5XfRNZHhaxpia31254CkmvACOaM-qcy-RJf744S3x_FjOv4jwzFriA/exec';
+const STORAGE_KEY = 'timeTrackerEntries';
+const GOOGLE_SCRIPT_URL = ''; // Paste your deployed Apps Script Web App URL here.
 
-let allData = [];
-// Make filteredData explicitly global if you suspect scope issues from other scripts or environments
-window.filteredData = []; // <--- CHANGE THIS LINE
-let charts = {}; // To store chart instances
+const charts = {};
+let allEntries = [];
+let filteredEntries = [];
+let isRemoteStorage = false;
 
-// --- DOM Elements ---
-const startDateInput = document.getElementById('startDate');
-const endDateInput = document.getElementById('endDate');
-const companyFilter = document.getElementById('companyFilter');
-const natureFilter = document.getElementById('natureFilter');
-const typeFilter = document.getElementById('typeFilter');
+const entryForm = document.getElementById('entryForm');
+const entryDate = document.getElementById('entryDate');
+const entryCustomer = document.getElementById('entryCustomer');
+const entryWorkLevel = document.getElementById('entryWorkLevel');
+const entryTask = document.getElementById('entryTask');
+const entryHours = document.getElementById('entryHours');
+const entryDescription = document.getElementById('entryDescription');
+
+const startDate = document.getElementById('startDate');
+const endDate = document.getElementById('endDate');
+const customerFilter = document.getElementById('customerFilter');
+const workLevelFilter = document.getElementById('workLevelFilter');
 const applyFiltersBtn = document.getElementById('applyFilters');
 const resetFiltersBtn = document.getElementById('resetFilters');
-const totalHoursElem = document.getElementById('totalHours');
-const totalCompaniesElem = document.getElementById('totalCompanies');
-const uniqueNaturesElem = document.getElementById('uniqueNatures');
-const dataTableBody = document.querySelector('#dataTable tbody');
+const syncNowBtn = document.getElementById('syncNow');
 
-// --- Initialization ---
-document.addEventListener('DOMContentLoaded', () => {
-    // Set default date range (e.g., last 30 days)
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 30);
+const storageModeEl = document.getElementById('storageMode');
+const totalHoursEl = document.getElementById('totalHours');
+const totalCustomersEl = document.getElementById('totalCustomers');
+const totalWorkLevelsEl = document.getElementById('totalWorkLevels');
+const totalEntriesEl = document.getElementById('totalEntries');
+const entriesTableBody = document.getElementById('entriesTableBody');
 
-    startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
-    endDateInput.value = today.toISOString().split('T')[0];
-
-    fetchData(); // Fetch data when the page loads
-    setupEventListeners();
+document.addEventListener('DOMContentLoaded', async () => {
+  entryDate.value = new Date().toISOString().split('T')[0];
+  setDefaultFilterRange();
+  bindEvents();
+  await loadEntries();
 });
 
-function setupEventListeners() {
-    applyFiltersBtn.addEventListener('click', applyFilters);
-    resetFiltersBtn.addEventListener('click', resetFilters);
+function bindEvents() {
+  entryForm.addEventListener('submit', saveEntry);
+  applyFiltersBtn.addEventListener('click', applyFilters);
+
+  resetFiltersBtn.addEventListener('click', () => {
+    setDefaultFilterRange();
+    customerFilter.value = '';
+    workLevelFilter.value = '';
+    applyFilters();
+  });
+
+  syncNowBtn.addEventListener('click', async () => {
+    if (!isRemoteStorage) return;
+    await loadEntries();
+  });
+
+  entriesTableBody.addEventListener('click', event => {
+    const btn = event.target.closest('button[data-id]');
+    if (!btn) return;
+    deleteEntry(btn.dataset.id);
+  });
 }
 
-// --- JSONP Callback Function ---
-// This function will be called by the Apps Script response
-function handleAppsScriptResponse(data) {
-    console.log("Data received via JSONP:", data);
-    // Process raw data: convert date strings to Date objects, ensure numeric 'Time (hrs)'
-    allData = data.map(row => {
-        // --- NOTE: These column names must match the cleaned headers in your Apps Script ---
-        // For example, 'Time (hrs)' in your sheet becomes 'Time_hrs' in the script
-        const dateStr = row.Date;
-        const timeHrs = parseFloat(row.Time_hrs);
-        const company = row.Company_Worked_For;
-        const nature = row.Nature_of_Work;
-        const type = row.Type_of_Work;
-        const description = row.Description_of_Work; // Ensure Description is also captured
-
-        return {
-            ...row, // Keep all original fields for table display if needed
-            parsedDate: dateStr ? new Date(dateStr) : null,
-            Time_hrs: isNaN(timeHrs) ? 0 : timeHrs, // Ensure it's a number
-            Company_Worked_For: company || 'N/A',
-            Nature_of_Work: nature || 'N/A',
-            Type_of_Work: type || 'N/A',
-            Description_of_Work: description || 'N/A' // Add description
-        };
-    }).filter(row => row.parsedDate !== null); // Filter out rows with invalid dates
-
-    populateFilterOptions();
-    applyFilters(); // Apply initial filters to show data
+function setDefaultFilterRange() {
+  const today = new Date();
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+  startDate.value = thirtyDaysAgo.toISOString().split('T')[0];
+  endDate.value = today.toISOString().split('T')[0];
 }
 
-
-// --- Data Fetching (modified to use JSONP) ---
-function fetchData() {
-    // Dynamically create a script tag to make a JSONP request
-    const script = document.createElement('script');
-    // The callback function name 'handleAppsScriptResponse' must match the function we defined above
-    script.src = SCRIPT_URL + '?callback=handleAppsScriptResponse';
-    document.body.appendChild(script);
-
-    script.onerror = () => {
-        console.error('Error loading Apps Script data via JSONP. Check URL and Apps Script deployment.');
-        alert('Failed to load data. Please check the Apps Script URL and deployment.');
-    };
-
-    // Clean up the script tag after it's loaded (or failed).
-    // This is important to prevent too many script tags in the DOM over time.
-    script.onload = () => {
-        // A small delay ensures the script has fully executed its callback
-        setTimeout(() => {
-            if (script.parentNode) {
-                document.body.removeChild(script);
-            }
-        }, 100);
-    };
+function seedEntries() {
+  return [
+    createEntry('Acme Corp', 'Implementation', 'Onboarding workshop', 2.5, 'Kickoff call and requirements', new Date()),
+    createEntry('Globex', 'Support', 'Bug triage', 1.75, 'Investigated reported bug', new Date(Date.now() - 86400000)),
+  ];
 }
 
-
-// --- Filter Population ---
-function populateFilterOptions() {
-    const companies = [...new Set(allData.map(item => item.Company_Worked_For))].sort();
-    const natures = [...new Set(allData.map(item => item.Nature_of_Work))].sort();
-    const types = [...new Set(allData.map(item => item.Type_of_Work))].sort();
-
-    populateSelect(companyFilter, companies);
-    populateSelect(natureFilter, natures);
-    populateSelect(typeFilter, types);
+function createEntry(customer, workLevel, task, hours, description, date) {
+  return {
+    id: crypto.randomUUID(),
+    date: new Date(date).toISOString().split('T')[0],
+    customer: customer.trim(),
+    workLevel: workLevel.trim(),
+    task: task.trim(),
+    hours: Number(hours),
+    description: description.trim(),
+  };
 }
 
-function populateSelect(selectElement, options) {
-    // Keep 'All' option, then add new options
-    while (selectElement.children.length > 1) {
-        selectElement.removeChild(selectElement.lastChild);
+async function loadEntries() {
+  isRemoteStorage = Boolean(GOOGLE_SCRIPT_URL.trim());
+  setStorageMode();
+
+  if (isRemoteStorage) {
+    try {
+      allEntries = await fetchRemoteEntries();
+      applyStateAfterLoad();
+      return;
+    } catch (error) {
+      console.error('Remote load failed, falling back to localStorage:', error);
+      storageModeEl.textContent = 'Remote sync failed. Using Local Storage fallback.';
     }
-    options.forEach(option => {
-        const opt = document.createElement('option');
-        opt.value = option;
-        opt.textContent = option;
-        selectElement.appendChild(opt);
-    });
+  }
+
+  const raw = localStorage.getItem(STORAGE_KEY);
+  allEntries = raw ? JSON.parse(raw) : seedEntries();
+  persistLocalEntries();
+  applyStateAfterLoad();
 }
 
-// --- Filtering Logic ---
+function applyStateAfterLoad() {
+  allEntries = allEntries
+    .map(normalizeEntry)
+    .filter(entry => entry.id && entry.date && entry.customer && entry.workLevel && entry.task && entry.hours > 0);
+  populateFilters();
+  applyFilters();
+}
+
+function normalizeEntry(entry) {
+  return {
+    id: String(entry.id || crypto.randomUUID()),
+    date: new Date(entry.date).toISOString().split('T')[0],
+    customer: String(entry.customer || '').trim(),
+    workLevel: String(entry.workLevel || '').trim(),
+    task: String(entry.task || '').trim(),
+    hours: Number(entry.hours || 0),
+    description: String(entry.description || '').trim(),
+  };
+}
+
+function setStorageMode() {
+  storageModeEl.textContent = isRemoteStorage
+    ? 'Storage: Google Drive (Google Sheets via Apps Script)'
+    : 'Storage: Browser Local Storage (single device)';
+  syncNowBtn.disabled = !isRemoteStorage;
+}
+
+async function fetchRemoteEntries() {
+  const response = await fetch(`${GOOGLE_SCRIPT_URL}?action=list`, { method: 'GET' });
+  if (!response.ok) throw new Error(`Load failed: ${response.status}`);
+  const payload = await response.json();
+  if (!payload.entries || !Array.isArray(payload.entries)) return [];
+  return payload.entries;
+}
+
+async function persistEntries() {
+  if (isRemoteStorage) {
+    await persistRemoteEntries(allEntries);
+    return;
+  }
+
+  persistLocalEntries();
+}
+
+function persistLocalEntries() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(allEntries));
+}
+
+async function persistRemoteEntries(entries) {
+  const response = await fetch(GOOGLE_SCRIPT_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+    body: JSON.stringify({ action: 'save', entries }),
+  });
+
+  if (!response.ok) throw new Error(`Save failed: ${response.status}`);
+}
+
+async function saveEntry(event) {
+  event.preventDefault();
+  const entry = createEntry(
+    entryCustomer.value,
+    entryWorkLevel.value,
+    entryTask.value,
+    entryHours.value,
+    entryDescription.value,
+    entryDate.value
+  );
+
+  if (!entry.customer || !entry.workLevel || !entry.task || !entry.date || entry.hours <= 0) {
+    return;
+  }
+
+  allEntries.unshift(entry);
+  try {
+    await persistEntries();
+  } catch (error) {
+    console.error(error);
+    alert('Unable to save to Google Drive right now. Please check your Apps Script URL/deployment.');
+    return;
+  }
+
+  entryForm.reset();
+  entryDate.value = new Date().toISOString().split('T')[0];
+  populateFilters();
+  applyFilters();
+}
+
+async function deleteEntry(id) {
+  allEntries = allEntries.filter(entry => entry.id !== id);
+
+  try {
+    await persistEntries();
+  } catch (error) {
+    console.error(error);
+    alert('Unable to delete from Google Drive right now. Please retry.');
+    return;
+  }
+
+  populateFilters();
+  applyFilters();
+}
+
+function populateFilters() {
+  populateSelect(customerFilter, uniqueValues(allEntries, 'customer'));
+  populateSelect(workLevelFilter, uniqueValues(allEntries, 'workLevel'));
+}
+
+function uniqueValues(entries, key) {
+  return [...new Set(entries.map(item => item[key]).filter(Boolean))].sort((a, b) => a.localeCompare(b));
+}
+
+function populateSelect(selectEl, values) {
+  const firstOption = selectEl.firstElementChild.cloneNode(true);
+  const selectedValue = selectEl.value;
+  selectEl.innerHTML = '';
+  selectEl.appendChild(firstOption);
+
+  values.forEach(value => {
+    const option = document.createElement('option');
+    option.value = value;
+    option.textContent = value;
+    selectEl.appendChild(option);
+  });
+
+  if (values.includes(selectedValue)) {
+    selectEl.value = selectedValue;
+  }
+}
+
 function applyFilters() {
-    const start = new Date(startDateInput.value);
-    const end = new Date(endDateInput.value);
-    // Adjust end date to include the whole day
-    end.setHours(23, 59, 59, 999);
+  const start = new Date(startDate.value);
+  const end = new Date(endDate.value);
+  end.setHours(23, 59, 59, 999);
 
-    const selectedCompany = companyFilter.value;
-    const selectedNature = natureFilter.value;
-    const selectedType = typeFilter.value;
+  filteredEntries = allEntries.filter(entry => {
+    const entryDateValue = new Date(entry.date);
+    const dateMatch = entryDateValue >= start && entryDateValue <= end;
+    const customerMatch = !customerFilter.value || entry.customer === customerFilter.value;
+    const workLevelMatch = !workLevelFilter.value || entry.workLevel === workLevelFilter.value;
+    return dateMatch && customerMatch && workLevelMatch;
+  });
 
-    filteredData = allData.filter(row => {
-        const rowDate = row.parsedDate;
-        const companyMatch = selectedCompany === '' || row.Company_Worked_For === selectedCompany;
-        const natureMatch = selectedNature === '' || row.Nature_of_Work === selectedNature;
-        const typeMatch = selectedType === '' || row.Type_of_Work === selectedType;
-
-        // Ensure rowDate is valid before comparison
-        return rowDate && rowDate >= start && rowDate <= end && companyMatch && natureMatch && typeMatch;
-    });
-
-    updateDashboard();
+  updateDashboard();
 }
 
-function resetFilters() {
-    // Reset date range (e.g., last 30 days)
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 30);
-    startDateInput.value = thirtyDaysAgo.toISOString().split('T')[0];
-    endDateInput.value = today.toISOString().split('T')[0];
-
-    // Reset select filters
-    companyFilter.value = '';
-    natureFilter.value = '';
-    typeFilter.value = '';
-
-    applyFilters(); // Re-apply filters with reset values
-}
-
-// --- Dashboard Update (Summary, Charts, Table) ---
 function updateDashboard() {
-    updateSummaryCards();
-    renderDailyHoursChart();
-    renderCompanyHoursChart();
-    renderNatureHoursChart();
-    renderTypeHoursChart();
-    renderDataTable();
+  updateSummaryCards();
+  renderTable();
+  renderDailyHoursChart();
+  renderCustomerHoursChart();
+  renderWorkLevelHoursChart();
 }
 
 function updateSummaryCards() {
-    const totalHours = filteredData.reduce((sum, row) => sum + row.Time_hrs, 0);
-    totalHoursElem.textContent = totalHours.toFixed(2);
-
-    const uniqueCompanies = new Set(filteredData.map(row => row.Company_Worked_For)).size;
-    totalCompaniesElem.textContent = uniqueCompanies;
-
-    const uniqueNatures = new Set(filteredData.map(row => row.Nature_of_Work)).size;
-    uniqueNaturesElem.textContent = uniqueNatures;
+  totalHoursEl.textContent = filteredEntries.reduce((sum, item) => sum + item.hours, 0).toFixed(2);
+  totalCustomersEl.textContent = new Set(filteredEntries.map(item => item.customer)).size;
+  totalWorkLevelsEl.textContent = new Set(filteredEntries.map(item => item.workLevel)).size;
+  totalEntriesEl.textContent = filteredEntries.length;
 }
 
-function renderDataTable() {
-    dataTableBody.innerHTML = ''; // Clear existing rows
+function renderTable() {
+  entriesTableBody.innerHTML = '';
 
-    // Only render if filteredData is not empty
-    if (filteredData.length === 0) {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `<td colspan="6" style="text-align: center; color: #c0c0d8;">No data available for the selected filters.</td>`;
-        dataTableBody.appendChild(tr);
-        return;
-    }
+  if (!filteredEntries.length) {
+    entriesTableBody.innerHTML = '<tr><td colspan="7">No entries found for this filter.</td></tr>';
+    return;
+  }
 
-    filteredData.forEach(row => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-            <td>${row.Date || 'N/A'}</td>
-            <td>${row.Time_hrs !== undefined ? row.Time_hrs.toFixed(2) : 'N/A'}</td>
-            <td>${row.Company_Worked_For || 'N/A'}</td>
-            <td>${row.Nature_of_Work || 'N/A'}</td>
-            <td>${row.Type_of_Work || 'N/A'}</td>
-            <td>${row.Description_of_Work || 'N/A'}</td>
-        `;
-        dataTableBody.appendChild(tr);
-    });
+  filteredEntries.forEach(entry => {
+    const row = document.createElement('tr');
+    row.innerHTML = `
+      <td>${entry.date}</td>
+      <td>${entry.customer}</td>
+      <td>${entry.workLevel}</td>
+      <td>${entry.task}</td>
+      <td>${entry.hours.toFixed(2)}</td>
+      <td>${entry.description || '-'}</td>
+      <td><button type="button" data-id="${entry.id}">Delete</button></td>
+    `;
+    entriesTableBody.appendChild(row);
+  });
 }
 
-// --- Chart Rendering Functions ---
-// Helper to destroy existing chart instances before re-rendering
-function destroyChart(chartId) {
-    if (charts[chartId]) {
-        charts[chartId].destroy();
-        delete charts[chartId];
-    }
+function destroyChart(id) {
+  if (charts[id]) {
+    charts[id].destroy();
+    delete charts[id];
+  }
 }
 
-// Chart 1: Daily Hours Trend
 function renderDailyHoursChart() {
-    destroyChart('dailyHoursChart');
-    const ctx = document.getElementById('dailyHoursChart').getContext('2d');
+  destroyChart('dailyHoursChart');
+  const grouped = groupSum(filteredEntries, 'date');
+  const labels = Object.keys(grouped).sort();
 
-    // Group hours by date
-    const dailyHours = filteredData.reduce((acc, row) => {
-        if (row.parsedDate) {
-            const dateKey = row.parsedDate.toISOString().split('T')[0]; // YYYY-MM-DD
-            acc[dateKey] = (acc[dateKey] || 0) + row.Time_hrs;
-        }
-        return acc;
-    }, {});
-
-    const labels = Object.keys(dailyHours).sort();
-    const data = labels.map(label => dailyHours[label]);
-
-    charts.dailyHoursChart = new Chart(ctx, {
-        type: 'line',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Hours',
-                data: data,
-                borderColor: '#00bcd4', /* Vibrant teal */
-                backgroundColor: 'rgba(0, 188, 212, 0.2)', /* Lighter teal fill */
-                fill: true,
-                tension: 0.3 /* Slightly smoother curve */
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                x: {
-                    type: 'time',
-                    time: {
-                        unit: 'day',
-                        tooltipFormat: 'MMM D, YYYY' // e.g., 'Jan 1, 2024'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Date',
-                        color: '#c0c0d8' // Light text for axis title
-                    },
-                    ticks: {
-                        color: '#a0aec0' // Light text for axis ticks
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)' // Light grid lines
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Hours',
-                        color: '#c0c0d8'
-                    },
-                    ticks: {
-                        color: '#a0aec0'
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
-                }
-            },
-            plugins: {
-                tooltip: {
-                    mode: 'index',
-                    intersect: false,
-                    backgroundColor: 'rgba(0,0,0,0.7)', // Dark tooltip background
-                    titleColor: '#00bcd4', // Teal tooltip title
-                    bodyColor: '#e0e0e0' // Light tooltip body text
-                },
-                legend: {
-                    labels: {
-                        color: '#c0c0d8' // Light text for legend
-                    }
-                }
-            }
-        }
-    });
+  charts.dailyHoursChart = new Chart(document.getElementById('dailyHoursChart'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{ label: 'Hours', data: labels.map(key => grouped[key]), borderColor: '#35d0ff', backgroundColor: 'rgba(53,208,255,0.2)', fill: true, tension: 0.25 }],
+    },
+    options: { responsive: true, plugins: { legend: { labels: { color: '#e8ecf6' } } }, scales: { x: { ticks: { color: '#aeb9ce' } }, y: { ticks: { color: '#aeb9ce' } } } },
+  });
 }
 
-// Chart 2: Hours by Company
-function renderCompanyHoursChart() {
-    destroyChart('companyHoursChart');
-    const ctx = document.getElementById('companyHoursChart').getContext('2d');
-
-    const companyData = filteredData.reduce((acc, row) => {
-        acc[row.Company_Worked_For] = (acc[row.Company_Worked_For] || 0) + row.Time_hrs;
-        return acc;
-    }, {});
-
-    const labels = Object.keys(companyData);
-    const data = labels.map(label => companyData[label]);
-
-    charts.companyHoursChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Hours',
-                data: data,
-                backgroundColor: [
-                    '#00bcd4', '#8bc34a', '#ffeb3b', '#ff5722', '#673ab7', '#e91e63', '#009688', '#ffc107'
-                ], /* Vibrant color palette */
-                borderColor: [
-                    '#00a8bd', '#7cb342', '#fdd835', '#e64a19', '#5e35b1', '#d81b60', '#00796b', '#ffa000'
-                ],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            indexAxis: 'y', // Make it a horizontal bar chart
-            scales: {
-                x: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Hours',
-                        color: '#c0c0d8'
-                    },
-                    ticks: {
-                        color: '#a0aec0'
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
-                },
-                y: {
-                    title: {
-                        display: true,
-                        text: 'Company',
-                        color: '#c0c0d8'
-                    },
-                    ticks: {
-                        color: '#a0aec0'
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false // No need for legend in single dataset bar chart
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0,0,0,0.7)',
-                    titleColor: '#00bcd4',
-                    bodyColor: '#e0e0e0'
-                }
-            }
-        }
-    });
+function renderCustomerHoursChart() {
+  destroyChart('customerHoursChart');
+  const grouped = groupSum(filteredEntries, 'customer');
+  charts.customerHoursChart = new Chart(document.getElementById('customerHoursChart'), {
+    type: 'bar',
+    data: { labels: Object.keys(grouped), datasets: [{ label: 'Hours', data: Object.values(grouped), backgroundColor: '#35d0ff' }] },
+    options: { responsive: true, plugins: { legend: { labels: { color: '#e8ecf6' } } }, scales: { x: { ticks: { color: '#aeb9ce' } }, y: { ticks: { color: '#aeb9ce' } } } },
+  });
 }
 
-// Chart 3: Hours by Nature of Work (Pie/Doughnut)
-function renderNatureHoursChart() {
-    destroyChart('natureHoursChart');
-    const ctx = document.getElementById('natureHoursChart').getContext('2d');
-
-    const natureData = filteredData.reduce((acc, row) => {
-        acc[row.Nature_of_Work] = (acc[row.Nature_of_Work] || 0) + row.Time_hrs;
-        return acc;
-    }, {});
-
-    const labels = Object.keys(natureData);
-    const data = labels.map(label => natureData[label]);
-
-    charts.natureHoursChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Hours',
-                data: data,
-                backgroundColor: [
-                    '#00bcd4', '#8bc34a', '#ffeb3b', '#ff5722', '#673ab7', '#e91e63', '#009688', '#ffc107', '#2196f3', '#f44336'
-                ], /* Vibrant color palette */
-                hoverOffset: 8 /* Slightly larger hover offset */
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false, // <--- ADD THIS LINE
-            aspectRatio: 1, // You can play with this, e.g., 1 for square, 1.5 for wider, 0.8 for taller
-            plugins: {
-                legend: {
-                    position: 'right',
-                    labels: {
-                        color: '#c0c0d8' // Light text for legend
-                    }
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0,0,0,0.7)',
-                    titleColor: '#00bcd4',
-                    bodyColor: '#e0e0e0',
-                    callbacks: {
-                        label: function(context) {
-                            let label = context.label || '';
-                            if (label) {
-                                label += ': ';
-                            }
-                            if (context.parsed !== null) {
-                                label += context.parsed.toFixed(2) + ' hours';
-                            }
-                            return label;
-                        }
-                    }
-                }
-            }
-        }
-    });
+function renderWorkLevelHoursChart() {
+  destroyChart('workLevelHoursChart');
+  const grouped = groupSum(filteredEntries, 'workLevel');
+  charts.workLevelHoursChart = new Chart(document.getElementById('workLevelHoursChart'), {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(grouped),
+      datasets: [{ data: Object.values(grouped), backgroundColor: ['#35d0ff', '#6b90ff', '#5ff5c5', '#ffca6b', '#ff7ea6'] }],
+    },
+    options: { responsive: true, plugins: { legend: { labels: { color: '#e8ecf6' } } } },
+  });
 }
 
-// Chart 4: Hours by Type of Work (Bar)
-function renderTypeHoursChart() {
-    destroyChart('typeHoursChart');
-    const ctx = document.getElementById('typeHoursChart').getContext('2d');
-
-    const typeData = filteredData.reduce((acc, row) => {
-        acc[row.Type_of_Work] = (acc[row.Type_of_Work] || 0) + row.Time_hrs;
-        return acc;
-    }, {});
-
-    const labels = Object.keys(typeData);
-    const data = labels.map(label => typeData[label]);
-
-    charts.typeHoursChart = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Hours',
-                data: data,
-                backgroundColor: '#673ab7', /* Deep purple accent */
-                borderColor: '#5e35b1',
-                borderWidth: 1
-            }]
-        },
-        options: {
-            responsive: true,
-            maintainAspectRatio: false, // <--- ADD THIS LINE
-            aspectRatio: 2, // <--- You can adjust this for bar charts (e.g., 2 makes it twice as wide as tall)
-            scales: {
-                x: {
-                    title: {
-                        display: true,
-                        text: 'Type of Work',
-                        color: '#c0c0d8'
-                    },
-                    ticks: {
-                        color: '#a0aec0'
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
-                },
-                y: {
-                    beginAtZero: true,
-                    title: {
-                        display: true,
-                        text: 'Hours',
-                        color: '#c0c0d8'
-                    },
-                    ticks: {
-                        color: '#a0aec0'
-                    },
-                    grid: {
-                        color: 'rgba(255, 255, 255, 0.1)'
-                    }
-                }
-            },
-            plugins: {
-                legend: {
-                    display: false
-                },
-                tooltip: {
-                    backgroundColor: 'rgba(0,0,0,0.7)',
-                    titleColor: '#00bcd4',
-                    bodyColor: '#e0e0e0'
-                }
-            }
-        }
-    });
+function groupSum(entries, key) {
+  return entries.reduce((acc, entry) => {
+    acc[entry[key]] = (acc[entry[key]] || 0) + entry.hours;
+    return acc;
+  }, {});
 }
-

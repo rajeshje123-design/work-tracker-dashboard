@@ -1,0 +1,9 @@
+{
+  "name": "Work Tracker Dashboard",
+  "short_name": "WorkTracker",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#10131c",
+  "theme_color": "#10131c",
+  "icons": []
+}
