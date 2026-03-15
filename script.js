@@ -1,5 +1,5 @@
 const STORAGE_KEY = 'timeTrackerEntries';
-const GOOGLE_SCRIPT_URL = ''; // Paste your deployed Apps Script Web App URL here.
+const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbytu8P_ix12DQwps8Rh08gpWLzp0-SfVtiI93k46y1-deKfosymdUAzKEDbOejxSOg/exec';
 
 const charts = {};
 let allEntries = [];
